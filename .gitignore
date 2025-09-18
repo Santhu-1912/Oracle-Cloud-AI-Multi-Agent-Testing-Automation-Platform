@@ -1,0 +1,27 @@
+# Environment Files
+.env
+.env.local
+.env.production
+config.js
+
+# Sensitive Data
+user_data/
+*.log
+credentials.json
+api_keys.txt
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+env/
+
+# Database
+*.sqlite
+*.db
+
+# IDE & OS
+.vscode/
+.DS_Store
+.idea/
