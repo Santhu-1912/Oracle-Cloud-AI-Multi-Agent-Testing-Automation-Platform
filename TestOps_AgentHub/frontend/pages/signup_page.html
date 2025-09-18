@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Signup - Cognizant</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #040b58 0%, #031177 50%, #04105e 100%);
+      font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      position: relative;
+    }
+
+    .logo-background {
+      position: absolute;
+      top: 12%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.5;
+      z-index: 1;
+      width: 600px;
+      height: 600px;
+      background-image: url("../assets/Cognizant-Logo.png");
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    .signup-container {
+      background: rgba(30, 58, 138, 0.9);
+      border-radius: 16px;
+      padding: 40px;
+      width: 420px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      z-index: 2;
+    }
+
+    h1 {
+      color: #60a5fa;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      margin: 12px 0;
+      background: rgba(30, 58, 138, 0.6);
+      border: 1px solid rgba(96, 165, 250, 0.3);
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 16px;
+      outline: none;
+    }
+
+    input::placeholder {
+      color: #94a3b8;
+    }
+
+    input:focus {
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 16px;
+      background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
+      color: white;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(29, 78, 216, 0.3);
+    }
+
+    .form-link {
+      color: #94a3b8;
+      font-size: 14px;
+      text-align: center;
+      display: block;
+      margin-top: 20px;
+      text-decoration: none;
+    }
+
+    .form-link:hover {
+      color: #60a5fa;
+    }
+    
+    .flash-messages {
+    background-color: #eaf6ff;
+    color: #0a4b78;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin-top: 15px;
+    font-weight: 500;
+    text-align: center;
+    animation: fadeOut 0.5s ease-in-out 1.5s forwards;
+    }
+
+    @keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+        display: none;
+    }
+    }
+
+
+  </style>
+</head>
+<body>
+  <div class="logo-background"></div>
+  <div class="signup-container">
+    <h1>Create Account</h1>
+    <form id="signupForm" method="POST" action="/signup">
+    <input type="text" name="fname" placeholder="First Name" id="firstName" required />
+    <input type="text" name="lname" placeholder="Last Name" id="lastName" required />
+    <input type="text" name="username" placeholder="Username" id="username" required />
+    <input type="password" name="password" placeholder="Password" id="password" required />
+    <button type="submit">Sign Up</button>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div class="flash-messages" id="flash-msg">
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
+
+    </form>
+
+    <a href="{{ url_for('index') }}" class="form-link">Already have an account? Login</a>
+  </div>
+  
+</body>
+</html>

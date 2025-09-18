@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Cognizant</title>
+    <style>
+        /* [Your CSS remains untouched as you provided] */
+        /* (same styles as before) */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #040b58 0%, #031177 50%, #04105e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        
+
+        .login-container {
+            background: rgba(30, 58, 138, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 40px;
+            width: 400px;
+            max-width: 90vw;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 2;
+        }
+
+        .login-title {
+            color: #60a5fa;
+            font-size: 32px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 40px;
+            letter-spacing: 1px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px 20px;
+            background: rgba(30, 58, 138, 0.6);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+            font-weight: 500;
+        }
+
+        .form-input::placeholder {
+            color: #94a3b8;
+        }
+
+        .form-input:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+            background: rgba(30, 58, 138, 0.8);
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .login-button:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(29, 78, 216, 0.3);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        .form-links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 24px;
+        }
+
+        .form-link {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .form-link:hover {
+            color: #60a5fa;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+                margin: 20px;
+            }
+            .login-title { font-size: 28px; }
+            .logo-background {
+                width: 400px;
+                height: 400px;
+            }
+        }
+
+        .bg-element {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(96, 165, 250, 0.1);
+            z-index: 0;
+        }
+
+        .bg-element-1 {
+            width: 200px;
+            height: 200px;
+            top: 10%;
+            left: 10%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .bg-element-2 {
+            width: 150px;
+            height: 150px;
+            bottom: 15%;
+            right: 15%;
+            animation: float 8s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background elements -->
+    <div class="bg-element bg-element-1"></div>
+    <div class="bg-element bg-element-2"></div>
+    <div class="logo-background"></div>
+    
+    <!-- Login form -->
+    <div class="login-container">
+        <h1 class="login-title">Login</h1>
+        <form id="loginForm" action="/login" method="POST">
+            <div class="form-group">
+                <input 
+                    type="text" 
+                    class="form-input" 
+                    name="username"
+                    placeholder="Username or Email"
+                    required
+                >
+            </div>
+            <div class="form-group">
+                <input 
+                    type="password" 
+                    class="form-input" 
+                    name="password"
+                    placeholder="Password"
+                    required
+                >
+            </div>
+            <button type="submit" class="login-button">Login</button>
+        </form>
+        <div class="form-links">
+            <a href="/forgot" class="form-link">Forgot password?</a>
+            <a href="/signup" class="form-link">Sign up</a>
+        </div>
+    </div>
+</body>
+</html>

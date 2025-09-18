@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Viewer Pro</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f3f2f1;
+            height: 100vh;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Left Sidebar - File Explorer */
+        .sidebar {
+            width: 300px;
+            background: #faf9f8;
+            border-right: 1px solid #e1dfdd;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+        }
+        .horizontal-scroll {
+            overflow-x: auto;
+            overflow-y: auto;
+            width: 100%;
+            max-height: 70vh;
+            border: 1px solid #ddd; /* Optional: to visualize the container */
+        }
+
+        /* Force the table to be wider than its container */
+        .horizontal-scroll table {
+            min-width: 1200px; /* This ensures horizontal scrolling */
+            width: max-content;
+        }
+
+        /* Prevent text wrapping in cells */
+        .horizontal-scroll td,
+        .horizontal-scroll th {
+            white-space: nowrap;
+            padding: 8px 12px;
+            min-width: 100px;
+        }
+
+        /* Scrollbar styling */
+        .horizontal-scroll::-webkit-scrollbar {
+            height: 12px;
+            width: 12px;
+        }
+
+        .horizontal-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 6px;
+        }
+
+        .horizontal-scroll::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 6px;
+        }
+
+        .horizontal-scroll::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .sidebar-header {
+            padding: 15px;
+            background: #106ebe;
+            color: white;
+            border-bottom: 1px solid #0e5aa1;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .files-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .file-item {
+            padding: 12px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .file-item:hover {
+            background: #deecf9;
+            border-color: #106ebe;
+            transform: translateX(2px);
+        }
+
+        .file-item.active {
+            background: #106ebe;
+            color: white;
+            border-color: #0e5aa1;
+        }
+
+        .file-item.active .file-info {
+            color: rgba(255,255,255,0.9);
+        }
+
+        .file-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .file-info {
+            font-size: 0.8rem;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .sheet-count {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+        }
+
+        .file-item.active .sheet-count {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        /* Excel Header */
+        .excel-header {
+            padding: 15px 20px;
+            background: #106ebe;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .current-file {
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .api-config {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .api-input {
+            padding: 6px 10px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            placeholder-color: rgba(255,255,255,0.7);
+            width: 200px;
+        }
+
+        .api-input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .refresh-btn {
+            background: #0e5aa1;
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: #0d4d87;
+        }
+
+        /* Sheet Tabs */
+        .sheet-tabs {
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            overflow-x: auto;
+            min-height: 45px;
+        }
+
+        .sheet-tab {
+            padding: 8px 16px;
+            background: #e9ecef;
+            border: 1px solid #dee2e6;
+            border-bottom: none;
+            border-radius: 6px 6px 0 0;
+            cursor: pointer;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            color: #495057;
+        }
+
+        .sheet-tab:hover {
+            background: #f8f9fa;
+            color: #106ebe;
+        }
+
+        .sheet-tab.active {
+            background: white;
+            color: #106ebe;
+            border-color: #106ebe;
+            font-weight: 600;
+        }
+
+        /* Data Area */
+        .data-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .toolbar {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 35px 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #106ebe;
+            box-shadow: 0 0 0 2px rgba(16, 110, 190, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        .table-container {
+             flex: 1;
+            overflow-x: auto;  /* ✅ Allow horizontal scrolling */
+            overflow-y: auto;
+            position: relative;
+            white-space: nowrap; 
+        }
+
+        .excel-table {
+            min-width: 1200px; /* ✅ Ensures columns don't squish */
+            width: max-content; /* ✅ Expand to fit all columns */
+        }
+
+        .excel-table th {
+            background: #f1f3f4;
+            border: 1px solid #dadce0;
+            padding: 8px 12px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            color: #3c4043;
+            font-size: 0.8rem;
+        }
+
+        .excel-table td {
+            border: 1px solid #dadce0;
+            padding: 6px 12px;
+            white-space: nowrap;
+            color: #3c4043;
+            background: white;
+        }
+
+        .excel-table tr:hover td {
+            background: #f8f9fa;
+        }
+
+        .excel-table tr:nth-child(even) td {
+            background: #fafbfc;
+        }
+
+        .excel-table tr:nth-child(even):hover td {
+            background: #f1f3f4;
+        }
+
+        /* Row numbers */
+        .row-number {
+            background: #f1f3f4 !important;
+            font-weight: 600;
+            text-align: center;
+            width: 60px;
+            color: #5f6368;
+            border-right: 2px solid #dadce0 !important;
+        }
+
+        /* Loading and Error States */
+        .loading-state, .error-state, .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            color: #6c757d;
+            text-align: center;
+        }
+
+        .loading-state i, .error-state i, .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #106ebe;
+        }
+
+        .error-state i {
+            color: #dc3545;
+        }
+
+        .loading-state i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Pagination */
+        .pagination {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .page-info {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        .page-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .page-btn {
+            padding: 6px 12px;
+            border: 1px solid #ced4da;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover {
+            background: #f8f9fa;
+            border-color: #106ebe;
+        }
+
+        .page-btn.active {
+            background: #106ebe;
+            color: white;
+            border-color: #106ebe;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 250px;
+            }
+            
+            .excel-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+            }
+            
+            .api-config {
+                flex-direction: column;
+            }
+            
+            .api-input {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="app-container">
+        <!-- Left Sidebar - File Explorer -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-folder-open"></i> Excel Files</h2>
+            </div>
+            <div class="files-container" id="filesContainer">
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading files...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Excel Header -->
+            <div class="excel-header">
+                <div class="current-file" id="currentFile">
+                    <i class="fas fa-file-excel"></i>
+                    <span>Select a file to begin</span>
+                </div>
+                <div class="api-config">
+                    <input type="text" class="api-input" id="apiUrl" placeholder="API URL (e.g., http://localhost:454)" value="">
+                    <button class="refresh-btn" onclick="loadFiles()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sheet Tabs -->
+            <div class="sheet-tabs" id="sheetTabs">
+                <!-- Sheet tabs will be populated here -->
+            </div>
+            
+            <!-- Data Area -->
+            <div class="data-area">
+                <div class="toolbar">
+                    <div class="search-box">
+                        <input type="text" class="search-input" id="searchInput" placeholder="Search in table..." onkeyup="filterTable()">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+                    <div class="stats" id="statsInfo">
+                        <span>No data loaded</span>
+                    </div>
+                </div>
+
+                <div class="table-container" id="tableContainer">
+                    <div class="horizontal-scroll">
+                        <div class="empty-state">
+                            <i class="fas fa-table"></i>
+                            <h3>Welcome to Excel Viewer Pro</h3>
+                            <p>Select a file from the left sidebar to view its data</p>
+                        </div>
+                    </div>    
+                </div>
+
+                <div class="pagination" id="paginationContainer" style="display: none;">
+                    <div class="page-info" id="pageInfo"></div>
+                    <div class="page-controls" id="pageControls"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="./assets/config.js"></script>
+    <script>
+        let currentData = [];
+let filteredData = [];
+let currentPage = 1;
+const rowsPerPage = 100;
+let currentFile = '';
+let currentSheet = '';
+
+function getApiUrl() {
+    const HOST_URL = window.ENV.HOST_URL;
+    return document.getElementById('apiUrl').value || `${HOST_URL}`;
+}
+
+async function loadFiles() {
+    const filesContainer = document.getElementById('filesContainer');
+    
+    try {
+        filesContainer.innerHTML = `
+            <div class="loading-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading files...</p>
+            </div>
+        `;
+
+        const response = await fetch(`${getApiUrl()}/testdata/files`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const files = await response.json();
+        
+        if (Object.keys(files).length === 0) {
+            filesContainer.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-folder-open"></i>
+                    <p>No Excel files found</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        Object.entries(files).forEach(([filename, fileInfo]) => {
+            const sheets = fileInfo.sheets || [];
+            const hasError = fileInfo.error;
+            
+            html += `
+                <div class="file-item" onclick="selectFile('${filename}')" data-filename="${filename}">
+                    <div class="file-name">
+                        <i class="fas fa-file-excel"></i>
+                        ${filename}
+                        ${hasError ? '<i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i>' : ''}
+                    </div>
+                    <div class="file-info">
+                        <span class="sheet-count">${sheets.length} sheets</span>
+                        <span>${formatFileSize(fileInfo.size || 0)}</span>
+                    </div>
+                </div>
+            `;
+        });
+
+        filesContainer.innerHTML = html;
+        window.filesData = files;
+        
+    } catch (error) {
+        console.error('Error loading files:', error);
+        filesContainer.innerHTML = `
+            <div class="error-state">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h4>Connection Error</h4>
+                <p>${error.message}</p>
+                <p style="font-size: 0.8rem; margin-top: 10px;">
+                    Make sure your API server is running at:<br>
+                    <code>${getApiUrl()}</code>
+                </p>
+            </div>
+        `;
+    }
+}
+
+function selectFile(filename) {
+    // Update active file
+    document.querySelectorAll('.file-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    document.querySelector(`[data-filename="${filename}"]`).classList.add('active');
+
+    currentFile = filename;
+    document.getElementById('currentFile').innerHTML = `
+        <i class="fas fa-file-excel"></i>
+        <span>${filename}</span>
+    `;
+
+    // Load sheet tabs
+    const fileInfo = window.filesData[filename];
+    const sheets = fileInfo.sheets || [];
+    
+    const sheetTabs = document.getElementById('sheetTabs');
+    if (sheets.length === 0) {
+        sheetTabs.innerHTML = '<p style="padding: 10px; color: #6c757d;">No sheets available</p>';
+        return;
+    }
+
+    let tabsHtml = '';
+    sheets.forEach((sheetName, index) => {
+        tabsHtml += `
+            <div class="sheet-tab ${index === 0 ? 'active' : ''}" 
+                 onclick="selectSheet('${sheetName}')" 
+                 data-sheet="${sheetName}">
+                ${sheetName}
+            </div>
+        `;
+    });
+    
+    sheetTabs.innerHTML = tabsHtml;
+    
+    // Auto-select first sheet
+    if (sheets.length > 0) {
+        selectSheet(sheets[0]);
+    }
+}
+
+async function selectSheet(sheetName) {
+    // Update active sheet tab
+    document.querySelectorAll('.sheet-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelector(`[data-sheet="${sheetName}"]`).classList.add('active');
+
+    currentSheet = sheetName;
+    await loadSheetData(currentFile, sheetName);
+}
+
+async function loadSheetData(filename, sheetname) {
+    const tableContainer = document.getElementById('tableContainer');
+    const statsInfo = document.getElementById('statsInfo');
+    
+    try {
+        tableContainer.innerHTML = `
+            <div class="loading-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading sheet data...</p>
+            </div>
+        `;
+
+        const response = await fetch(`${getApiUrl()}/testdata/sheet-data/${encodeURIComponent(filename)}/${encodeURIComponent(sheetname)}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        currentData = result.data;
+        filteredData = [...currentData];
+        currentPage = 1;
+        
+        displayTable(result.columns, filteredData);
+        updateStats(result);
+        
+    } catch (error) {
+        console.error('Error loading sheet data:', error);
+        tableContainer.innerHTML = `
+            <div class="error-state">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h4>Failed to load sheet</h4>
+                <p>${error.message}</p>
+            </div>
+        `;
+        statsInfo.innerHTML = '<span style="color: #dc3545;">Error loading data</span>';
+    }
+}
+
+function displayTable(columns, data) {
+    const tableContainer = document.getElementById('tableContainer');
+    if (!data || data.length === 0) {
+        tableContainer.innerHTML = `
+            <div class="horizontal-scroll">
+                <div class="empty-state">
+                    <i class="fas fa-table"></i>
+                    <h4>No Data</h4>
+                    <p>This sheet appears to be empty</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    // Calculate pagination
+    const totalPages = Math.ceil(data.length / rowsPerPage);
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    const pageData = data.slice(startIndex, endIndex);
+
+    let html = '<table class="excel-table"><thead><tr>';
+
+    // Row number header
+    html += '<th class="row-number">#</th>';
+
+    // Column headers
+    columns.forEach(col => {
+        html += `<th>${col}</th>`;
+    });
+    html += '</tr></thead><tbody>';
+
+    // Data rows
+    pageData.forEach((row, index) => {
+        const rowNumber = startIndex + index + 1;
+        html += '<tr>';
+        html += `<td class="row-number">${rowNumber}</td>`;
+
+        columns.forEach(col => {
+            const cellValue = row[col] !== undefined ? row[col] : '';
+            html += `<td>${cellValue}</td>`;
+        });
+        html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+
+    // Wrap table in horizontal-scroll div
+    tableContainer.innerHTML = `<div class="horizontal-scroll">${html}</div>`;
+    updatePagination(totalPages);
+}
+
+function updateStats(result) {
+    const statsInfo = document.getElementById('statsInfo');
+    statsInfo.innerHTML = `
+        <span><i class="fas fa-table"></i> ${result.total_rows} rows</span>
+        <span><i class="fas fa-columns"></i> ${result.total_columns} columns</span>
+        <span><i class="fas fa-layer-group"></i> ${currentSheet}</span>
+    `;
+}
+
+function updatePagination(totalPages) {
+    const paginationContainer = document.getElementById('paginationContainer');
+    const pageInfo = document.getElementById('pageInfo');
+    const pageControls = document.getElementById('pageControls');
+    
+    if (totalPages <= 1) {
+        paginationContainer.style.display = 'none';
+        return;
+    }
+    
+    paginationContainer.style.display = 'flex';
+    
+    const startRecord = (currentPage - 1) * rowsPerPage + 1;
+    const endRecord = Math.min(currentPage * rowsPerPage, filteredData.length);
+    
+    pageInfo.innerHTML = `Showing ${startRecord}-${endRecord} of ${filteredData.length} rows`;
+    
+    let controlsHtml = '';
+    
+    // Previous button
+    controlsHtml += `<button class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+        <i class="fas fa-chevron-left"></i>
+    </button>`;
+    
+    // Page numbers
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        controlsHtml += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+    }
+    
+    // Next button
+    controlsHtml += `<button class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+        <i class="fas fa-chevron-right"></i>
+    </button>`;
+    
+    pageControls.innerHTML = controlsHtml;
+}
+
+function goToPage(page) {
+    if (page < 1 || page > Math.ceil(filteredData.length / rowsPerPage)) return;
+    
+    currentPage = page;
+    const columns = Object.keys(filteredData[0] || {});
+    displayTable(columns, filteredData);
+}
+
+function filterTable() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    
+    if (searchTerm === '') {
+        filteredData = [...currentData];
+    } else {
+        filteredData = currentData.filter(row => {
+            return Object.values(row).some(value => 
+                value.toString().toLowerCase().includes(searchTerm)
+            );
+        });
+    }
+    
+    currentPage = 1;
+    const columns = Object.keys(currentData[0] || {});
+    displayTable(columns, filteredData);
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+// Initialize app
+document.addEventListener('DOMContentLoaded', function() {
+    loadFiles();
+});
+
+    </script>
+</body>
+</html>

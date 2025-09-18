@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Excel Viewer Pro</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* reset / base */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f3f2f1;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar (kept for layout) */
+        .sidebar {
+            width: 300px;
+            background: #faf9f8;
+            border-right: 1px solid #e1dfdd;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+            min-width: 0;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            min-width: 0;
+        }
+
+        .excel-header {
+            padding: 15px 20px;
+            background: #106ebe;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .data-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        .toolbar {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .search-box { position: relative; flex: 1; max-width: 480px; }
+        .search-input {
+            width: 100%;
+            padding: 8px 35px 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #106ebe;
+            box-shadow: 0 0 0 2px rgba(16,110,190,0.12);
+        }
+        .search-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        .stats { display:flex; gap: 12px; font-size: 0.9rem; color: #6c757d; align-items:center; }
+
+        .refresh-btn, .save-btn {
+            background: #0e5aa1;
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .save-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+        .refresh-btn:hover, .save-btn:hover { background: #0b4f8b; }
+
+        .table-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .horizontal-scroll {
+            overflow: auto;
+            width: 100%;
+            flex: 1;
+            -webkit-overflow-scrolling: touch;
+            border: 1px solid #ddd;
+            background: white;
+        }
+
+        .horizontal-scroll table {
+            min-width: 1200px;
+            width: max-content;
+            border-collapse: collapse;
+        }
+
+        .horizontal-scroll td,
+        .horizontal-scroll th {
+            white-space: nowrap;
+            padding: 8px 12px;
+            min-width: 100px;
+            border: 1px solid #dadce0;
+        }
+
+        .excel-table th {
+            background: #f1f3f4;
+            padding: 8px 12px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            color: #3c4043;
+            font-size: 0.8rem;
+        }
+
+        .excel-table td {
+            padding: 6px 12px;
+            white-space: nowrap;
+            color: #3c4043;
+            background: white;
+        }
+
+        .excel-table tr:hover td { background: #f8f9fa; }
+        .excel-table tr:nth-child(even) td { background: #fafbfc; }
+        .excel-table tr:nth-child(even):hover td { background: #f1f3f4; }
+
+        .horizontal-scroll::-webkit-scrollbar { height: 12px; width: 12px; }
+        .horizontal-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 6px; }
+        .horizontal-scroll::-webkit-scrollbar-thumb { background: #888; border-radius: 6px; }
+        .horizontal-scroll::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        .loading-state, .error-state, .empty-state {
+            display:flex;
+            flex-direction: column;
+            align-items:center;
+            justify-content:center;
+            height:100%;
+            color:#6c757d;
+            text-align:center;
+            padding: 20px;
+        }
+        .loading-state i, .error-state i, .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #106ebe;
+        }
+
+        .pagination {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { width: 250px; }
+            .excel-header { flex-direction: column; gap: 10px; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        
+
+        <div class="main-content">
+            <div class="excel-header" style="display:none;">
+                <div class="current-file">Excel Viewer Pro</div>
+                <div class="api-config">
+                    <input class="api-input" placeholder="API URL (optional)" />
+                    <button class="refresh-btn">Refresh</button>
+                </div>
+            </div>
+
+            <div class="data-area">
+                <div class="toolbar">
+                    <div class="search-box">
+                        <input type="text" class="search-input" id="searchInput" placeholder="Search in table..." onkeyup="filterTable()">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <button class="save-btn" id="saveBtn" onclick="saveTable()" title="Save edited changes to Excel">Save</button>
+                        <button class="refresh-btn" onclick="loadData()" title="Reload from server">Reload</button>
+                    </div>
+
+                    <div class="stats" id="statsInfo" style="margin-left:8px;">
+                        <span>No data loaded</span>
+                    </div>
+                </div>
+
+                <div class="table-container" id="tableContainer">
+                    <div class="horizontal-scroll" id="scrollArea">
+                        <div class="empty-state" id="emptyState">
+                            <i class="fas fa-table"></i>
+                            <h3>Welcome to Excel Viewer Pro</h3>
+                            <p>Select a file from the left sidebar to view its data</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pagination" id="paginationContainer" style="display: none;">
+                    <div class="page-info" id="pageInfo"></div>
+                    <div class="page-controls" id="pageControls"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="./assets/config.js"></script>
+    <script>
+    // ---------- Config ----------
+
+    const API_BASE = window.ENV.HOST_URL; // change if needed
+
+    // Load data from your endpoint and render the table
+    async function loadData() {
+        toggleSave(false);
+        try {
+            const res = await fetch(`${API_BASE}/testmanager`);
+            if (!res.ok) throw new Error(`Status ${res.status}`);
+            const data = await res.json();
+            renderTable(data);
+        } catch (err) {
+            console.error("Error loading data:", err);
+            document.querySelector(".horizontal-scroll").innerHTML = `
+                <div class="error-state">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <h3>Unable to load data</h3>
+                    <p>Check the API or CORS settings.</p>
+                </div>`;
+            document.getElementById("statsInfo").innerHTML = `<span>Error loading data</span>`;
+        }
+    }
+
+    function renderTable(data) {
+        const container = document.querySelector(".horizontal-scroll");
+        if (!data || !data.length) {
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-table"></i><h3>No data found</h3></div>';
+            document.getElementById("statsInfo").innerHTML = "<span>0 rows loaded</span>";
+            toggleSave(false);
+            return;
+        }
+
+        // Build table markup with editable cells
+        let table = "<table class='excel-table'><thead><tr>";
+        const headers = Object.keys(data[0]);
+        headers.forEach(key => table += `<th>${escapeHtml(String(key))}</th>`);
+        table += "</tr></thead><tbody>";
+
+        data.forEach(row => {
+            table += "<tr>";
+            headers.forEach(h => {
+                const raw = row[h];
+                const text = (raw === null || typeof raw === 'undefined') ? '' : String(raw);
+                table += `<td contenteditable="true" data-col="${escapeHtml(String(h))}">${escapeHtml(text)}</td>`;
+            });
+            table += "</tr>";
+        });
+
+        table += "</tbody></table>";
+        container.innerHTML = table;
+        document.getElementById("statsInfo").innerHTML = `<span>${data.length} rows loaded</span>`;
+        toggleSave(true);
+    }
+
+    // Filter table rows (search)
+    function filterTable() {
+        const q = document.getElementById('searchInput').value.toLowerCase().trim();
+        const table = document.querySelector('.horizontal-scroll table');
+        if (!table) return;
+        const rows = table.tBodies[0].rows;
+
+        for (const row of rows) {
+            const text = row.textContent.toLowerCase();
+            const show = q === '' || text.includes(q);
+            row.style.display = show ? '' : 'none';
+        }
+    }
+
+    // Save edited table back to server
+    async function saveTable() {
+        const btn = document.getElementById('saveBtn');
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+
+        const table = document.querySelector('.horizontal-scroll table');
+        if (!table) {
+            alert('No table to save.');
+            btn.disabled = false;
+            btn.textContent = 'Save';
+            return;
+        }
+
+        const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent);
+        const rows = Array.from(table.querySelectorAll('tbody tr'));
+        const updatedData = rows.map(tr => {
+            const cells = Array.from(tr.querySelectorAll('td'));
+            const obj = {};
+            headers.forEach((header, i) => {
+                // Use textContent to get the edited value (plain text)
+                obj[header] = cells[i] ? cells[i].textContent.trim() : '';
+            });
+            return obj;
+        });
+
+        try {
+            const res = await fetch(`${API_BASE}/testmanager`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updatedData)
+            });
+            if (res.ok) {
+                // brief success UI
+                btn.textContent = 'Saved';
+                setTimeout(() => btn.textContent = 'Save', 1200);
+                // Update stats count to reflect saved row count (optional)
+                document.getElementById("statsInfo").innerHTML = `<span>${updatedData.length} rows saved</span>`;
+            } else {
+                const text = await res.text();
+                console.error('Save failed', res.status, text);
+                alert('Failed to save changes. See console for details.');
+                btn.disabled = false;
+                btn.textContent = 'Save';
+            }
+        } catch (err) {
+            console.error("Error saving changes:", err);
+            alert("Error saving changes. Check server and CORS.");
+            btn.disabled = false;
+            btn.textContent = 'Save';
+        }
+    }
+
+    // Helper: enable/disable Save button
+    function toggleSave(enable) {
+        const btn = document.getElementById('saveBtn');
+        btn.disabled = !enable;
+    }
+
+    // Small helper to avoid XSS when inserting table text
+    function escapeHtml(unsafe) {
+        if (unsafe === null || typeof unsafe === 'undefined') return '';
+        return String(unsafe)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Run on start
+    window.addEventListener('load', loadData);
+    </script>
+</body>
+</html>

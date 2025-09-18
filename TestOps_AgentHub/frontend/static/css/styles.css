@@ -1,0 +1,136 @@
+/* styles.css – global styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+}
+#runPieChart {
+  max-width: 100%;
+  height: auto;
+}
+.card {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+.card:hover {
+  transform: scale(1.02);
+}
+@keyframes scrollTicker {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+#recentTicker {
+  display: inline-block;
+  white-space: nowrap;
+  animation: scrollTicker 25s linear infinite;
+}
+.background-logo {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  opacity: 0.99;
+  background-image: url("../assets/cognizant_symbol.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  z-index: 0;
+}
+.bot-message table {
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.bot-message th,
+.bot-message td {
+  border: 1px solid #ccc;
+  padding: 6px 10px;
+  color: white;
+}
+.report-card {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 16px;
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 200px;
+  overflow: hidden;
+}
+
+.report-title-wrapper {
+  overflow: hidden;
+  white-space: nowrap;
+  position: relative;
+  height: 28px;
+}
+
+.report-title {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  animation: none;
+  transition: transform 0.5s linear;
+}
+
+.report-card:hover .report-title {
+  animation-play-state: running;
+}
+
+@keyframes scrollTicker {
+0% { transform: translateX(0%); }
+100% { transform: translateX(-100%); }
+}
+
+.report-actions {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.report-actions a {
+  flex: 1;
+  text-align: center;
+  padding: 6px 0;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.1);
+  color: #e2e8f0;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.report-actions a:hover {
+  background: rgba(255,255,255,0.2);
+}
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+  margin: 30px 0;
+}
+
+.sub-app {
+  background-color: #0078d4;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.sub-app:hover {
+  background-color: #005a9e;
+}
+

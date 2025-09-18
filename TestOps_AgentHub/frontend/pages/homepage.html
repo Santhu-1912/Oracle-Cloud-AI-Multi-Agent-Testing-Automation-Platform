@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home - TestOps</title>
+  <link rel="stylesheet" href="/frontend/static/css/styles.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%);
+      color: #e2e8f0;
+      position: relative;
+      overflow-x: hidden;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 30px;
+      position: relative;
+      z-index: 1;
+    }
+    .top-bar .icons {
+      display: flex;
+      gap: 16px;
+    }
+    .top-bar .icon {
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 18px;
+    }
+    .welcome-section {
+      text-align: center;
+      margin-top: 1cm;
+      margin-bottom: 1.5cm;
+    }
+    .welcome-section h2 {
+      margin: 0;
+      font-size: 24px;
+      color: #e0e7ff;
+    }
+    .welcome-section span {
+      display: block;
+      font-size: 20px;
+      margin-top: 8px;
+      font-weight: 500;
+    }
+    .main-content {
+      padding: 10px 30px 30px 30px;
+      max-width: 1280px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+    .carousel {
+      display: flex;
+      gap: 20px;
+      height: 200px;
+      margin-bottom: 1.5cm;
+      align-items: center;
+      position: relative;
+    }
+    .carousel-group {
+      display: none;
+      width: 100%;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .carousel-group.active {
+      display: flex;
+    }
+    .card {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 20px;
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+    }
+    .card h3 {
+      margin-bottom: 10px;
+    }
+    .arrow-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.05);
+      border: none;
+      color: #cbd5e1;
+      font-size: 24px;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-radius: 50%;
+      backdrop-filter: blur(6px);
+      z-index: 2;
+    }
+    .arrow-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+    .arrow-left {
+      left: -40px;
+    }
+    .arrow-right {
+      right: -40px;
+    }
+    .search-bar {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 10px;
+      margin-bottom: 1.5cm;
+    }
+    .search-bar input {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 16px;
+      flex: 1;
+      outline: none;
+      margin-left: 10px;
+    }
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    .button-grid button {
+      background: rgba(255, 255, 255, 0.05);
+      border: none;
+      padding: 16px;
+      color: white;
+      border-radius: 12px;
+      font-size: 16px;
+      backdrop-filter: blur(10px);
+    }
+    .button-grid button:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="background-logo"></div>
+  <div class="top-bar">
+    <div class="icons"></div>
+    <div class="icons">
+      <span class="icon" onclick="logout()" title="Logout">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="3" width="16" height="18" rx="3" stroke="#e0e7ff" stroke-width="2" fill="none"/>
+          <path d="M9 12H21" stroke="#e0e7ff" stroke-width="2" stroke-linecap="round"/>
+          <path d="M13 8L9 12L13 16" stroke="#e0e7ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+    </div>
+  </div>
+
+  <div class="welcome-section">
+    <h2>Welcome {{ username }}!</h2>
+  </div>
+
+  <div class="main-content">
+  <div class="carousel">
+    <button class="arrow-btn arrow-left" onclick="showGroup((current - 1 + groups.length) % groups.length)">&#x276E;</button>
+
+    <!-- Group 1: Bar + Pie + Insight -->
+    <div class="carousel-group active" id="group1">
+      <div class="card">
+        <h3>Test Case Result</h3>
+        <canvas id="barChart"></canvas>
+      </div>
+      <div class="card">
+        <h3>Execution Breakdown</h3>
+        <canvas id="runPieChart" style="width: 340px; height: 200px;"></canvas>
+      </div>
+      <div class="card">
+        <h3>Test Insight</h3>
+        <ul id="insightList"></ul>
+      </div>
+    </div>
+
+    <!-- Group 2: Test Stats + Ticker -->
+    <div class="carousel-group" id="group2" style="flex-direction: column; gap: 20px;">
+      <!-- 🔹 Row 1: 4 Test Cards -->
+      <div style="display: flex; gap: 20px;">
+        <div class="card" id="totalTestsCard">
+          <h3>Total Tests</h3>
+          <p id="totalTests">0</p>
+        </div>
+        <div class="card" id="uiTestsCard">
+          <h3>UI Tests</h3>
+          <p id="uiTests">0</p>
+        </div>
+        <div class="card" id="apiTestsCard">
+          <h3>API Tests</h3>
+          <p id="apiTests">0</p>
+        </div>
+        <div class="card" id="otherTestsCard">
+          <h3>Other Tests</h3>
+          <p id="otherTests">0</p>
+        </div>
+      </div>
+
+      <!-- 🔹 Row 2: Ticker Bar -->
+      <div class="card" style="overflow: hidden; white-space: nowrap; width: 100%;">
+        <h3>Recent Test Runs</h3>
+        <div id="recentTicker" style="
+          display: inline-block;
+          white-space: nowrap;
+          animation: scrollTicker 25s linear infinite;
+          font-size: 16px;
+          margin-top: 10px;
+        ">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+    </div>
+      <button class="arrow-btn arrow-right" onclick="showGroup((current + 1) % groups.length)">&#x276F;</button>
+    </div>
+
+    <div class="search-bar">
+      <span>🔍</span>
+      <input type="text" placeholder="Search..." />
+    </div>
+
+    <div class="button-grid" id="subAppGrid">
+      <button class="sub-app" onclick="location.href='/mcp-agent'">MCP Agent</button>
+      <button class="sub-app" onclick="location.href='/reports'">UI Reports</button>
+      <button class="sub-app" onclick="location.href='/api-reports'">API Reports</button>
+      <button class="sub-app" onclick="location.href='/patch_reports'">Patch Reports</button>
+      <button class="sub-app" onclick="location.href='/test_data'">Test Data</button>
+      <button class="sub-app" onclick="location.href='/testmanager'">Test Manager</button>
+      <button class="sub-app" onclick="location.href='/tdmdata'">TDM Data</button>
+      <button class="sub-app" onclick="location.href='/datarecon'">Data Recon</button>
+    </div>
+
+
+  </div>`
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="./assets/config.js"></script>
+  
+
+  <script>
+    function logout() {
+    window.location.href = "/logout"; // This makes a GET request
+  }
+    async function fetchData() {
+      const HOST_URL = window.ENV.HOST_URL;
+      try {
+        // 1. Latest Report (Bar Chart & Pie Chart)
+        const reportRes = await fetch(`${HOST_URL}/latest-report`);
+        const reportData = await reportRes.json();
+        const categoriesRes = await fetch(`${HOST_URL}/test-categories`);
+        const categoriesData = await categoriesRes.json();
+        const recentTicker = document.getElementById("recentTicker");
+        const recent = reportData.recent_tests || [];
+        // Calculate counts
+        const passedCount = reportData.summary.passed;
+        const failedCount = reportData.summary.failed + reportData.summary.timedOut + reportData.summary.unknown;
+        const skippedCount = reportData.summary.skipped;
+
+        // Render Bar Chart
+        const ctx = document.getElementById('barChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['Pass', 'Fail', 'Skip'],
+            datasets: [{
+              label: 'Test Case Result',
+              data: [passedCount, failedCount, skippedCount],
+              backgroundColor: ['#17a2b8', '#a52a2a', '#6c757d'],
+            }]
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, ticks: { color: 'white' } },
+              x: { ticks: { color: 'white' } }
+            }
+          }
+        });
+
+        // Render Pie Charthttp://localhost:444
+        const pieCtx = document.getElementById('runPieChart').getContext('2d');
+        new Chart(pieCtx, {
+          type: 'pie',
+          data: {
+            labels: ['Passed', 'Failed', 'Skipped'],
+            datasets: [{
+              label: 'Execution Breakdown',
+              data: [passedCount, failedCount, skippedCount],
+              backgroundColor: ['#17a2b8', '#a52a2a', '#6c757d'],
+              borderColor: '#1e293b',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: false, // << disables auto resizing
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                labels: { color: 'white' },
+                position: 'bottom'
+              },
+              tooltip: {
+                callbacks: {
+                  label: (context) => {
+                    const label = context.label || '';
+                    const value = context.raw || 0;
+                    return `${label}: ${value}`;
+                  }
+                }
+              }
+            }
+          }
+        });
+
+        // 2. Execution Summary (Test Insight)
+        const execRes = await fetch(`${HOST_URL}/execution-summary`);
+        const execData = await execRes.json();
+
+        const insightList = document.getElementById('insightList');
+        insightList.innerHTML = `
+          <li style="margin-bottom: 10px;">✅ Pass Rate: <strong>${execData.pass_rate}</strong></li>
+          <li style="margin-bottom: 10px;">❌ Failures: <strong>${execData.failures}</strong></li>
+          <li style="margin-bottom: 10px;">📊 Total Executions: <strong>${execData.total_executions}</strong></li>
+          <li style="margin-bottom: 10px;">⏱ Average Runtime: <strong>${execData.avg_runtime}</strong></li>
+          <li style="margin-bottom: 10px;">🐞 Most Failed Test: <strong>${execData.most_failed_test || "N/A"}</strong></li>
+        `;
+        // 3. Test Categories (Total, UI, API, Other)
+        document.getElementById('totalTests').innerText = categoriesData.total;
+        document.getElementById('uiTests').innerText = categoriesData.ui.count;
+        document.getElementById('apiTests').innerText = categoriesData.api.count;
+        document.getElementById('otherTests').innerText = categoriesData.other.count;
+
+        // Show test names on click
+        document.getElementById('uiTestsCard').addEventListener('click', () => {
+          alert("UI Tests:\n\n" + categoriesData.ui.names.join('\n'));
+        });
+        document.getElementById('apiTestsCard').addEventListener('click', () => {
+          alert("API Tests:\n\n" + categoriesData.api.names.join('\n'));
+        });
+        document.getElementById('otherTestsCard').addEventListener('click', () => {
+          alert("Other Tests:\n\n" + (categoriesData.other.names.length > 0 ? categoriesData.other.names.join('\n') : "None"));
+        });
+        // 4. Recent Test Runs (Ticker)
+        recentTicker.innerHTML = recent.slice(0, 10).map(t => {
+            const statusIcon = t.status === "passed" ? "✅" :
+                               t.status === "failed" ? "❌" :
+                               t.status === "timedOut" ? "⏳" : "⚠️";
+            return `<span style="margin-right: 40px;">${t.name} — ${statusIcon} ${t.status}</span>`;
+          }).join('');
+
+      } catch (err) {
+        console.error('❌ Failed to fetch dashboard data:', err);
+      }
+    }
+
+    fetchData();
+
+    const groups = [
+      document.getElementById('group1'),
+      document.getElementById('group2')
+    ];
+    let current = 0;
+
+    function showGroup(index) {
+      groups[current].classList.remove('active');
+      current = index;
+      groups[current].classList.add('active');
+    }
+    // ✅ Auto-switch every 15 seconds
+    setInterval(() => {
+      const next = (current + 1) % groups.length;
+      showGroup(next);
+    }, 30000); // 15000ms = 15 seconds
+
+    
+    // Live search for sub-apps
+const searchInput = document.querySelector('.search-bar input');
+const subApps = document.querySelectorAll('.sub-app');
+
+searchInput.addEventListener('input', () => {
+  const query = searchInput.value.toLowerCase();
+  subApps.forEach(btn => {
+    const text = btn.textContent.toLowerCase();
+    btn.style.display = text.includes(query) ? 'block' : 'none';
+  });
+});
+  
+  </script>
+</body>
+</html>

@@ -1,0 +1,273 @@
+{
+  "testManagement": {
+    "patch_versions": [
+      "24A", "24B", "24C", "24D", "25A", "25B", "25C"
+    ],
+    "testSuites": {
+      "standardTests": {
+        "description": "Individual test cases that run independently",
+        "testCases": [
+          "TC_API_FIN_InvoiceCreation_01",
+          "TC_API_FIN_InvoiceCreation_02", 
+          "TC_API_FIN_InvoiceCreation_03",
+          "TC_API_FIN_InvoiceCreation_04",
+          "TC_API_FIN_InvoiceCreation_05",
+          "TC_API_UIValidation_01",
+          "TC_API_HCM_NewHire_01",
+          "TC_API_HCM_UIValidation_01", 
+          "TC_API_SUPPLIER_01",
+          "TC_API_PAY_01",
+          "Invoice creation UI",
+          "Hire an employee UI",
+          "Register Supplier UI",
+          "Customer Creation UI", 
+          "AR Invoice Creation UI",
+          "AR Receipt Creation UI"
+        ]
+      },
+      "bulkTests": {
+        "description": "Test cases designed to run multiple times with different data sets",
+        "testCases": [
+          "BulkAPISupplierCreation"
+        ]
+      },
+      "endToEndFlows": {
+        "description": "Sequential test flows that must run in specific order",
+        "flows": [
+          {
+            "id": "Procure to Pay Flow",
+            "name": "Procure to Pay Flow",
+            "sequence": [
+              "TC_API_SUPPLIER_01",
+              "Invoice creation UI"
+            ]
+          }
+        ]
+      }
+    },
+    "modules": [
+      {
+        "moduleName": "Supplier Management",
+        "testCases": [
+          {
+            "sNo": 1,
+            "testCaseName": "Supplier Creation UI",
+            "testDescription": "Validates supplier registration using the Oracle UI, covering supplier header, address, and site details.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 2, 
+            "testCaseName": "Supplier Site Creation UI",
+            "testDescription": "Tests site definition for a registered supplier, including purchasing and pay sites configuration.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 3,
+            "testCaseName": "Supplier Profile Approval UI", 
+            "testDescription": "Validates the workflow-driven approval process for supplier profiles created via UI.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 4,
+            "testCaseName": "Supplier Creation REST API",
+            "testDescription": "Tests supplier creation using Oracle Fusion REST API, including header attributes and business relationships.",
+            "category": "standardTests"
+          }
+        ]
+      },
+      {
+        "moduleName": "Procurement",
+        "testCases": [
+          {
+            "sNo": 1,
+            "testCaseName": "PO Creation UI",
+            "testDescription": "Tests creation of a Purchase Order in the Oracle Procurement UI with item, quantity, and supplier information.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 2,
+            "testCaseName": "PO Approval Workflow UI",
+            "testDescription": "Validates PO approval based on workflow rules and business unit hierarchy.", 
+            "category": "standardTests"
+          },
+          {
+            "sNo": 3,
+            "testCaseName": "PO Acknowledgment UI",
+            "testDescription": "Confirms that the supplier acknowledges the PO via Supplier Portal or buyer confirmation.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 4,
+            "testCaseName": "PO Creation REST API",
+            "testDescription": "Verifies PO creation using Oracle Procurement REST API with all required fields and line details.",
+            "category": "standardTests"
+          }
+        ]
+      },
+      {
+        "moduleName": "Account Payables",
+        "testCases": [
+          {
+            "sNo": 1,
+            "testCaseName": "Invoice creation UI",
+            "testDescription": "Validates invoice entry through the Payables UI, including invoice header, lines, and distribution.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 2,
+            "testCaseName": "Invoice Validation UI",
+            "testDescription": "Confirms the invoice status changes to 'Validated' after running the validation process.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 3,
+            "testCaseName": "Invoice Accounting UI",
+            "testDescription": "Ensures invoice is accounted and journals are created successfully in subledger.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 4,
+            "testCaseName": "Invoice Approval UI",
+            "testDescription": "Checks if the invoice is routed for approval and follows appropriate rules based on thresholds.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 5,
+            "testCaseName": "Invoice Payment UI",
+            "testDescription": "Tests selection and payment of validated invoices through manual or automatic methods.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 6,
+            "testCaseName": "Invoice Creation REST API",
+            "testDescription": "Tests invoice creation using Payables REST API with header, lines, and accounting segments.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 7,
+            "testCaseName": "Invoice Accounting REST API",
+            "testDescription": "Validates accounting entries for invoices created using Oracle REST API.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 8,
+            "testCaseName": "Register Supplier UI",
+            "testDescription": "Validates the end-to-end supplier registration process via the Oracle UI, including input of supplier details, business classification, and submission.",
+            "category": "standardTests"
+          }
+        ]
+      },
+      {
+        "moduleName": "Payments",
+        "testCases": [
+          {
+            "sNo": 1,
+            "testCaseName": "Create Payment Process Request UI",
+            "testDescription": "Validates the creation of a Payment Process Request (PPR) through the Oracle Payables UI, including selection of invoices, payment method, and disbursement bank account.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 2,
+            "testCaseName": "Void Payment UI",
+            "testDescription": "Confirms that a previously created payment can be voided with valid reason codes in the UI.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 3,
+            "testCaseName": "Create Single Payment REST API",
+            "testDescription": "Tests creation of a standalone payment record via REST API for a validated invoice.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 4,
+            "testCaseName": "Initiate Payment REST API",
+            "testDescription": "Verifies end-to-end payment submission and status updates via Oracle REST API.",
+            "category": "standardTests"
+          }
+        ]
+      },
+      {
+        "moduleName": "Order to Cash (O2C)",
+        "testCases": [
+          {
+            "sNo": 1,
+            "testCaseName": "Customer Creation UI",
+            "testDescription": "Tests customer record creation in Oracle Receivables UI, including party details, addresses, and profiles.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 2,
+            "testCaseName": "Customer Creation REST API",
+            "testDescription": "Validates customer setup through Oracle Trading Community Architecture REST APIs.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 3,
+            "testCaseName": "AR Invoice Creation UI",
+            "testDescription": "Tests creation of AR transaction in UI including business unit, transaction type, and customer details.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 4,
+            "testCaseName": "AR Invoice Accounting UI",
+            "testDescription": "Verifies accounting of AR invoice including receivable and revenue accounts.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 5,
+            "testCaseName": "AR Invoice Creation REST API",
+            "testDescription": "Tests AR invoice creation using Receivables REST API, validating payload and resulting transaction.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 6,
+            "testCaseName": "Receipt Creation UI",
+            "testDescription": "Tests entry of receipt and method of payment from the customer using Receivables UI.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 7,
+            "testCaseName": "Receipt Application UI",
+            "testDescription": "Validates application of receipt against open AR transactions via the UI.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 8,
+            "testCaseName": "Receipt Creation REST API",
+            "testDescription": "Confirms receipt creation and automatic application using REST API.",
+            "category": "standardTests"
+          }
+        ]
+      },
+      {
+        "moduleName": "Record to Report (R2R)",
+        "testCases": [
+          {
+            "sNo": 1,
+            "testCaseName": "Journal Entry Creation UI",
+            "testDescription": "Validates manual journal entry creation including category, line balances, and justification.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 2,
+            "testCaseName": "Journal Posting UI",
+            "testDescription": "Ensures posted journals reflect in the general ledger and can be reviewed in account inquiry.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 3,
+            "testCaseName": "Journal Entry Creation REST API",
+            "testDescription": "Tests creation of journal entries using Oracle General Ledger REST API.",
+            "category": "standardTests"
+          },
+          {
+            "sNo": 4,
+            "testCaseName": "Journal Posting REST API",
+            "testDescription": "Validates journal posting functionality through Oracle REST API.",
+            "category": "standardTests"
+          }
+        ]
+      }
+    ]
+  }
+}

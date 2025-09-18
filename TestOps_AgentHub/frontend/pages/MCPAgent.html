@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MCP Agent - TestOps</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%);
+      color: #e2e8f0;
+      height: 100vh;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 20px 40px;
+    }
+    h1 { text-align: center; margin-bottom: 20px; }
+    .chat-box {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      margin-bottom: 20px;
+    }
+    .chat-message {
+      margin-bottom: 15px;
+      max-width: 90%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      display: inline-block;
+      clear: both;
+      word-wrap: break-word;
+    }
+    .user-message { float: right; background: #10b981; color: white; }
+    .bot-message { float: left; background: rgba(255, 255, 255, 0.06); color: #a5f3fc; }
+    .error-message { float: left; background: rgba(220, 38, 127, 0.18); color: #ff6b9d; }
+    .thinking { 
+      float: left; 
+      background: rgba(255, 255, 255, 0.06); 
+      color: #a5f3fc;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .chat-input {
+      display: flex; align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px; padding: 10px; gap: 10px;
+      backdrop-filter: blur(6px); height: 60px;
+    }
+    .chat-input textarea {
+      flex: 1; height: 100%; resize: none; border: none;
+      background: transparent; color: white; font-size: 16px;
+      outline: none; padding: 8px;
+    }
+    .chat-input button {
+      height: 100%; aspect-ratio: 1;
+      border: none; border-radius: 50%;
+      background: #10b981; color: white; font-size: 20px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background 0.3s;
+    }
+    .chat-input button:hover { background: #059669; }
+    .chat-input button:disabled { background: #6b7280; cursor: not-allowed; }
+    .data-table {
+      width: 100%; border-collapse: collapse; margin-top: 10px;
+    }
+    .data-table th, .data-table td {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 8px; text-align: left;
+    }
+    .data-table th {
+      background: rgba(255, 255, 255, 0.06);
+      font-weight: bold;
+    }
+    .download-btn {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 6px 12px;
+      background: #0ea5e9;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: background 0.3s;
+    }
+    .download-btn:hover { background: #0284c7; }
+    .file-preview {
+      margin-top: 8px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      font-size: 14px;
+    }
+
+    /* Thinking spinner */
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 3px solid rgba(255,255,255,0.15);
+      border-top-color: rgba(255,255,255,0.6);
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Response content styling */
+    .response-content {
+      line-height: 1.6;
+    }
+    .response-content h1, .response-content h2, .response-content h3 {
+      color: #a5f3fc;
+      margin-top: 15px;
+      margin-bottom: 8px;
+    }
+    .response-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .response-content table th, .response-content table td {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 8px;
+      text-align: left;
+    }
+    .response-content table th {
+      background: rgba(255, 255, 255, 0.06);
+      font-weight: bold;
+    }
+    .response-content pre {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>MCP AGENT-Octas 2.0 powered by ESAN GPT (Generate Process and Test)</h1>
+    <div class="chat-box" id="chatBox">
+      <div class="chat-message bot-message">
+        👋 Hello! I can help you with test data queries. Ask me about test modules, test cases, or test organization!
+      </div>
+    </div>
+    <div class="chat-input">
+      <textarea id="userInput" placeholder="Type your message..." rows="1"></textarea>
+      <button id="sendButton">&#x27A4;</button>
+    </div>
+  </div>
+<script src="./assets/config.js"></script>
+<script>
+    const chatBox = document.getElementById('chatBox');
+    const userInput = document.getElementById('userInput');
+    const sendButton = document.getElementById('sendButton');
+    // Load chat history from ui_backend.py
+async function loadChatHistory() {
+
+    // If Flask injected the username into template, use it; else fallback
+    const MCP_URL = window.ENV.MCP_URL;
+    const username = "{{ username or 'guest' }}";
+
+    try {
+        const response = await fetch(`${MCP_URL}/chat-history/${username}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        chatBox.innerHTML = ''; // Clear chat box
+
+        // Add each message from history
+        data.messages.forEach(msg => {
+            addMessage(msg.message, msg.sender === 'user');
+        });
+
+        console.log(`✅ Loaded ${data.messages.length} messages for ${username}`);
+    } catch (err) {
+        console.error("Error loading chat history:", err);
+        addMessage("❌ Failed to load chat history", false);
+    }
+}
+
+// Call it when page loads
+window.addEventListener('DOMContentLoaded', loadChatHistory);
+
+    // Handle Enter key (without Shift)
+    userInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    // Handle button click
+    sendButton.addEventListener('click', sendMessage);
+
+    function addMessage(content, isUser = false, isThinking = false) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chat-message ${isUser ? 'user-message' : (isThinking ? 'thinking' : 'bot-message')}`;
+        
+        if (isUser) {
+            messageDiv.innerHTML = `<strong>You:</strong> ${escapeHtml(content)}`;
+        } else if (isThinking) {
+            messageDiv.innerHTML = `<div class="spinner"></div><div><strong>Agent is thinking...</strong></div>`;
+        } else {
+            messageDiv.innerHTML = `<strong>Assistant:</strong> <div class="response-content">${formatResponse(content)}</div>`;
+        }
+        
+        chatBox.appendChild(messageDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        
+        return messageDiv;
+    }
+
+    function formatResponse(content) {
+        console.log("DEBUG → Formatting content:", typeof content, content);
+        
+        try {
+            // Handle different types of responses
+            if (typeof content === 'object') {
+                return `<pre>${JSON.stringify(content, null, 2)}</pre>`;
+            }
+            
+            if (typeof content === 'string') {
+                // Try to parse as JSON first
+                try {
+                    const parsed = JSON.parse(content);
+                    return `<pre>${JSON.stringify(parsed, null, 2)}</pre>`;
+                } catch (e) {
+                    // Not JSON, continue with text formatting
+                }
+                
+                // Handle basic markdown-like formatting
+                let formatted = content;
+                
+                // Convert headers
+                formatted = formatted.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+                formatted = formatted.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+                formatted = formatted.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+                
+                // Convert bold text
+                formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                
+                // Convert numbered lists
+                formatted = formatted.replace(/^\d+\.\s+(.*)$/gm, '<li>$1</li>');
+                if (formatted.includes('<li')) {
+                    formatted = formatted.replace(/(<li[^>]*>.*?<\/li>)/gs, '<ol>$1</ol>');
+                }
+                
+                // Convert bullet points  
+                formatted = formatted.replace(/^[-•*]\s+(.*)$/gm, '<li>$1</li>');
+                
+                // Handle tables (pipe-delimited)
+                if (formatted.includes('|') && formatted.split('\n').some(line => line.includes('|'))) {
+                    const lines = formatted.split('\n');
+                    let tableHtml = '';
+                    let inTable = false;
+                    
+                    lines.forEach((line, index) => {
+                        if (line.includes('|')) {
+                            if (!inTable) {
+                                tableHtml += '<table>';
+                                inTable = true;
+                            }
+                            const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell);
+                            const isHeader = index === 0 || (index === 1 && line.includes('---'));
+                            
+                            if (!isHeader || !line.includes('---')) {
+                                const cellType = isHeader ? 'th' : 'td';
+                                tableHtml += '<tr>';
+                                cells.forEach(cell => {
+                                    tableHtml += `<${cellType}>${cell}</${cellType}>`;
+                                });
+                                tableHtml += '</tr>';
+                            }
+                        } else {
+                            if (inTable) {
+                                tableHtml += '</table>';
+                                inTable = false;
+                            }
+                            if (line.trim()) {
+                                tableHtml += line + '<br>';
+                            }
+                        }
+                    });
+                    
+                    if (inTable) {
+                        tableHtml += '</table>';
+                    }
+                    
+                    formatted = tableHtml;
+                }
+                
+                // Convert line breaks
+                formatted = formatted.replace(/\n\n/g, '</p><p>');
+                formatted = formatted.replace(/\n/g, '<br>');
+                
+                // Wrap in div if not already formatted
+                if (!formatted.includes('<') || (!formatted.startsWith('<h') && !formatted.startsWith('<ol') && !formatted.startsWith('<ul') && !formatted.startsWith('<table'))) {
+                    formatted = `<div>${formatted}</div>`;
+                }
+                
+                return formatted;
+            }
+            
+            // Fallback for other types
+            return `<pre>${String(content)}</pre>`;
+            
+        } catch (error) {
+            console.error('Error formatting response:', error);
+            return `<div class="error-message">Error formatting response: ${escapeHtml(String(content))}</div>`;
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    async function sendMessage() {
+    const message = userInput.value.trim();
+    if (!message) return;
+
+    console.log("DEBUG → Sending message:", message);
+
+    // Add user message
+    addMessage(message, true);
+    
+    // Clear input and disable button
+    userInput.value = '';
+    sendButton.disabled = true;
+    
+    // Add thinking indicator
+    const thinkingMessage = addMessage('', false, true);
+
+    try {
+        // ✅ Inject logged-in username from Flask template variable
+        const MCP_URL = window.ENV.MCP_URL;
+        const username = "{{ username }}"; 
+
+        const response = await fetch(`${MCP_URL}/mcp-agent`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                user_input: message,
+                username: username   // ✅ send actual username instead of default guest
+            }),
+        });
+
+        console.log("DEBUG → Response status:", response.status);
+
+        // Remove thinking indicator
+        thinkingMessage.remove();
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Get the raw response text first
+        const rawText = await response.text();
+        console.log("DEBUG → Raw response:", rawText);
+
+        // Try to parse as JSON
+        let data;
+        try {
+            data = JSON.parse(rawText);
+            console.log("DEBUG → Parsed JSON:", data);
+        } catch (parseError) {
+            console.warn("DEBUG → Failed to parse JSON, falling back to plain text:", parseError);
+            // Fallback: wrap raw text in object so rest of logic works
+            data = { response: rawText };
+        }
+
+
+        // Handle different response structures dynamically
+        let responseContent;
+        if (data && typeof data === 'object') {
+            if (data.response !== undefined) {
+                responseContent = data.response;
+            } else if (data.data !== undefined) {
+                responseContent = data.data;
+            } else if (data.result !== undefined) {
+                responseContent = data.result;
+            } else if (data.content !== undefined) {
+                responseContent = data.content;
+            } else if (data.message !== undefined) {
+                responseContent = data.message;
+            } else {
+                responseContent = data;
+            }
+        } else {
+            responseContent = data;
+        }
+
+        console.log("DEBUG → Final response content:", responseContent);
+        
+        // Add bot response
+        addMessage(responseContent, false);
+
+    } catch (error) {
+        console.error('Error:', error);
+        
+        // Remove thinking indicator if it still exists
+        if (thinkingMessage && thinkingMessage.parentNode) {
+            thinkingMessage.remove();
+        }
+        
+        addMessage(`❌ Error: ${error.message}`, false);
+    } finally {
+        // Re-enable button
+        sendButton.disabled = false;
+        userInput.focus();
+    }
+}
+
+    // Focus input on load
+    window.addEventListener('load', () => {
+        userInput.focus();
+    });
+</script>
+
+</body>
+</html>

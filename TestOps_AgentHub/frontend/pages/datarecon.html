@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Reconciliation Reports</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .refresh-btn, .download-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.7rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover, .download-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .download-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 80px);
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 380px;
+            background: white;
+            border-right: 1px solid #e1e8ed;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header {
+            background: #f8f9fa;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e1e8ed;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .reports-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem 0;
+        }
+
+        .report-item {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #f1f3f4;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .report-item:hover {
+            background-color: #f8f9ff;
+            transform: translateX(5px);
+        }
+
+        .report-item.active {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border-left: 4px solid #2196f3;
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
+        }
+
+        .report-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .report-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .report-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .content-header {
+            padding: 1.5rem 2rem;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e1e8ed;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .content-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .content-meta {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .report-viewer {
+            flex: 1;
+            padding: 1rem;
+            overflow: hidden;
+        }
+
+        .report-frame {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #6c757d;
+            text-align: center;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #495057;
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            max-width: 400px;
+            line-height: 1.6;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e9ecef;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem 1.5rem;
+            margin: 0.5rem;
+            border: 1px solid #f5c6cb;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: 40vh;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .header-buttons {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Data Reconciliation Reports</h1>
+        <div class="header-buttons">
+            <button class="refresh-btn" onclick="loadReports()">
+                🔄 Refresh Reports
+            </button>
+            <button class="download-btn" id="downloadBtn" onclick="downloadSelectedZip()" disabled>
+                ⬇️ Download ZIP
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <span id="reportsCount">Loading reports...</span>
+            </div>
+            <div class="reports-list" id="reportsList">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Loading reports...
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div class="content-header" id="contentHeader" style="display: none;">
+                <div class="content-title" id="contentTitle"></div>
+                <div class="content-meta" id="contentMeta"></div>
+            </div>
+            
+            <div class="report-viewer" id="reportViewer">
+                <div class="empty-state">
+                    <h3>📋 Select a Report</h3>
+                    <p>Choose a report from the sidebar to view its detailed reconciliation data and analysis.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/config.js"></script>
+    <script>
+        let reports = [];
+        let selectedReportId = null;
+
+        // Load reports on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadReports();
+        });
+
+        async function loadReports() {
+            const MCP_URL = window.ENV.MCP_URL;
+            try {
+                showLoading();
+                console.log('Fetching reports from /reports/list');
+                
+                const response = await fetch(`${MCP_URL}/reports/list`);
+                console.log('Response status:', response.status);
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (response.ok) {
+                    if (data.reports && data.reports.length === 0) {
+                        showError(`${data.message} - Debug: ${JSON.stringify(data)}`);
+                        return;
+                    }
+                    
+                    reports = data.reports || [];
+                    displayReports();
+                    updateReportsCount(data.total_count || 0);
+                    
+                    if (reports.length > 0) {
+                        selectReport(reports[0].id);
+                    }
+                } else {
+                    showError('Failed to load reports: ' + (data.detail || data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Full error details:', error);
+                showError('Network error: ' + error.message);
+            }
+        }
+
+        function displayReports() {
+            const reportsList = document.getElementById('reportsList');
+            
+            if (reports.length === 0) {
+                reportsList.innerHTML = `
+                    <div style="padding: 2rem; text-align: center; color: #6c757d;">
+                        <h4>No Reports Found</h4>
+                        <p>No reconciliation reports are available at the moment.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            reportsList.innerHTML = reports.map(report => `
+                <div class="report-item" data-id="${report.id}" onclick="selectReport('${report.id}')">
+                    <div class="report-name">${escapeHtml(report.name)}</div>
+                    <div class="report-details">
+                        <div class="report-meta">
+                            <span>📁 ${escapeHtml(report.folder)}</span>
+                        </div>
+                        <div class="report-meta">
+                            <span>🕒 ${escapeHtml(report.modified_date)}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function selectReport(reportId) {
+            const MCP_URL = window.ENV.MCP_URL;
+            try {
+                console.log('Selecting report:', reportId);
+                
+                // Update UI to show selection
+                document.querySelectorAll('.report-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                const selectedElement = document.querySelector(`[data-id="${reportId}"]`);
+                if (selectedElement) {
+                    selectedElement.classList.add('active');
+                }
+                
+                selectedReportId = reportId;
+                
+                // Enable/update download button
+                const selectedReport = reports.find(r => r.id === reportId);
+                const downloadBtn = document.getElementById('downloadBtn');
+                if (selectedReport && selectedReport.original_zip) {
+                    downloadBtn.disabled = false;
+                    downloadBtn.setAttribute('data-zip', selectedReport.original_zip);
+                } else {
+                    downloadBtn.disabled = true;
+                }
+                
+                // Show loading in content area
+                const reportViewer = document.getElementById('reportViewer');
+                reportViewer.innerHTML = `
+                    <div class="loading" style="justify-content: center; align-items: center; height: 100%;">
+                        <div class="spinner"></div>
+                        Loading report content...
+                    </div>
+                `;
+
+                // Fetch report content
+                const response = await fetch(`${MCP_URL}/reports/content/${encodeURIComponent(reportId)}`);
+                const reportData = await response.json();
+
+                if (response.ok) {
+                    showReportContent(reportData);
+                } else {
+                    showError('Failed to load report content: ' + (reportData.detail || reportData.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error selecting report:', error);
+                showError('Error loading report: ' + error.message);
+            }
+        }
+
+        function showReportContent(reportData) {
+            const contentHeader = document.getElementById('contentHeader');
+            const contentTitle = document.getElementById('contentTitle');
+            const contentMeta = document.getElementById('contentMeta');
+            const reportViewer = document.getElementById('reportViewer');
+
+            // Update header
+            contentHeader.style.display = 'block';
+            contentTitle.textContent = `${reportData.name} Report`;
+            contentMeta.textContent = `Last modified: ${reportData.modified_date}`;
+
+            // Display report content in iframe using blob URL (safer than srcdoc)
+            const blob = new Blob([reportData.content], { type: 'text/html' });
+            const blobUrl = URL.createObjectURL(blob);
+            
+            reportViewer.innerHTML = `
+                <iframe class="report-frame" src="${blobUrl}" title="${escapeHtml(reportData.name)} Report">
+                    Your browser does not support iframes. Please use a modern browser to view this report.
+                </iframe>
+            `;
+        }
+
+        function showLoading() {
+            document.getElementById('reportsList').innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Loading reports...
+                </div>
+            `;
+        }
+
+        function showError(message) {
+            const reportsList = document.getElementById('reportsList');
+            const errorHtml = `<div class="error-message">${escapeHtml(message)}</div>`;
+            
+            if (reportsList.querySelector('.loading')) {
+                reportsList.innerHTML = errorHtml;
+            } else {
+                reportsList.insertAdjacentHTML('afterbegin', errorHtml);
+            }
+        }
+
+        function updateReportsCount(count) {
+            document.getElementById('reportsCount').textContent = `Available Reports (${count})`;
+        }
+
+        async function downloadSelectedZip() {
+            const MCP_URL = window.ENV.MCP_URL;
+            const downloadBtn = document.getElementById('downloadBtn');
+            const zipName = downloadBtn.getAttribute('data-zip');
+            if (!zipName) {
+                alert('No ZIP file selected for download');
+                return;
+            }
+            
+            console.log('Downloading ZIP:', zipName);
+            // Simple direct download - no fetch needed
+            window.location.href = `${MCP_URL}/reports/download/${encodeURIComponent(zipName)}`;
+        }
+
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

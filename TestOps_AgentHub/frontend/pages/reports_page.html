@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Reports</title>
+    <style>
+        /* UI-only: Global resets */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header style */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        /* Sidebar and container */
+        .container {
+            display: flex;
+            height: calc(100vh - 80px);
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 380px;
+            background: white;
+            border-right: 1px solid #e1e8ed;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header {
+            background: #f8f9fa;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e1e8ed;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .search-container {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e1e8ed;
+        }
+
+        .reports-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem 0;
+        }
+
+        .report-item {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #f1f3f4;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            background: none;
+        }
+
+        .report-item:hover {
+            background-color: #f8f9ff;
+            transform: translateX(5px);
+        }
+
+        .report-item.active {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border-left: 4px solid #2196f3;
+            box-shadow: 0 2px 8px rgba(33,150,243,0.2);
+        }
+
+        .report-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .report-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+
+        /* Main content area */
+        .main-content {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .content-header {
+            padding: 1.5rem 2rem;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e1e8ed;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin: 0;
+            flex: 1;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-action {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: #6c757d;
+            padding: 0.7rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-action:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-action:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .content-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+            background: white;
+        }
+
+        .report-frame {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background: white;
+        }
+
+        .placeholder, .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        /* Loading spinner match */
+        .loading-spinner, .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+        .spinner-border, .spinner {
+            width: 28px;
+            height: 28px;
+            border: 2px solid #e9ecef;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem 1.5rem;
+            margin: 0.5rem;
+            border: 1px solid #f5c6cb;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive changes */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: 40vh;
+            }
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            .action-buttons {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>📊 UI Test Reports Dashboard</h1>
+        <div class="action-buttons" id="actionButtons" style="display: none;">
+            <button class="btn-action" onclick="loadReports()">
+                🔄 Refresh
+            </button>
+            <button class="btn-action" id="downloadBtn" onclick="downloadReport()">
+                ⬇️ Download
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <span id="reportsCount">0</span>
+            </div>
+            <div class="search-container">
+                <input type="text" class="search-input" id="searchInput" placeholder="🔍 Search reports..." 
+                    style="padding: 0.5rem; width: 100%; border-radius: 8px; border: 1px solid #dee2e6; background: #f8f9fa; color: #333;">
+            </div>
+            <div class="reports-list" id="reportsList">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="content-header">
+                <h2 class="content-title" id="contentTitle">Select a report to view</h2>
+            </div>
+            <div class="content-body" id="contentBody">
+                <div class="empty-state" id="placeholder">
+                    <h3>📋 No Report Selected</h3>
+                    <p>Choose a report from the sidebar to view its contents</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS Original Logic (unchanged): -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./assets/config.js"></script>
+    <script>
+        let allReports = [];
+        let selectedReport = null;
+
+        // Load reports on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadReports();
+            setupSearch();
+        });
+
+        async function loadReports() {
+            const HOST_URL = window.ENV.HOST_URL;
+            showLoading();
+            
+            try {
+                console.log('📡 Fetching reports from API...');
+                const response = await fetch(`${HOST_URL}/get-reports`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('📊 Reports data received:', data);
+                
+                allReports = data.reports || [];
+                displayReports(allReports);
+                
+                // Auto-select the latest report (first one in the list)
+                if (allReports.length > 0) {
+                    selectReport(0);
+                }
+                
+            } catch (error) {
+                console.error('❌ Error loading reports:', error);
+                showError(error.message);
+            }
+        }
+
+        function displayReports(reports) {
+            const reportsList = document.getElementById('reportsList');
+            const reportsCount = document.getElementById('reportsCount');
+            
+            reportsCount.textContent = `Available Reports (${reports.length})`;
+            
+            if (reports.length === 0) {
+                reportsList.innerHTML = `
+                    <div class="text-center p-4">
+                        <i class="fas fa-inbox fa-2x mb-2 opacity-50"></i>
+                        <p class="mb-0">No reports found</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            reportsList.innerHTML = reports.map((report, index) => `
+                <div class="report-item" onclick="selectReport(${index})">
+                    <div class="report-name">
+                        ${escapeHtml(report.testName)}
+                    </div>
+                    <div class="report-meta">
+                        <span class="report-timestamp">
+                            🕒 ${formatTimestamp(report.timestamp)}
+                        </span>
+                        <span class="report-status" style="background-color: #27ae60; color: white; padding: 0.1rem 0.4rem; border-radius: 8px; font-size: 0.7rem; text-transform: uppercase;">
+                            ${escapeHtml(report.status)}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectReport(index) {
+            selectedReport = allReports[index];
+            
+            // Update active state
+            document.querySelectorAll('.report-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelectorAll('.report-item')[index].classList.add('active');
+            
+            // Update content header
+            document.getElementById('contentTitle').textContent = selectedReport.testName;
+            document.getElementById('actionButtons').style.display = 'flex';
+            
+            // Load report content
+            loadReportContent();
+        }
+
+        function loadReportContent() {
+            const HOST_URL = window.ENV.HOST_URL;
+            if (!selectedReport) return;
+            
+            const contentBody = document.getElementById('contentBody');
+            contentBody.innerHTML = `
+                <iframe 
+                    class="report-frame" 
+                    src="${HOST_URL}${selectedReport.reportUrl}"
+                    onload="hideLoading()"
+                    onerror="showError('Failed to load report content')">
+                </iframe>
+            `;
+        }
+
+        function downloadReport() {
+            const HOST_URL = window.ENV.HOST_URL;
+            if (selectedReport) {
+                window.open(`${HOST_URL}${selectedReport.downloadUrl}`, '_blank');
+            }
+        }
+
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase().trim();
+                
+                const filteredReports = allReports.filter(report => 
+                    report.testName.toLowerCase().includes(searchTerm) ||
+                    report.timestamp.toLowerCase().includes(searchTerm) ||
+                    report.status.toLowerCase().includes(searchTerm)
+                );
+                
+                displayReports(filteredReports);
+                
+                // If we have filtered results, auto-select the first one
+                if (filteredReports.length > 0) {
+                    // Find the index of the first filtered report in the original array
+                    const originalIndex = allReports.findIndex(report => 
+                        report.testName === filteredReports[0].testName
+                    );
+                    if (originalIndex !== -1) {
+                        selectReport(originalIndex);
+                    }
+                }
+            });
+        }
+
+        function showLoading() {
+            const contentBody = document.getElementById('contentBody');
+            contentBody.innerHTML = `
+                <div class="loading-spinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading reports...</p>
+                </div>
+            `;
+        }
+
+        function hideLoading() {
+            // Loading is handled by iframe onload
+        }
+
+        function showError(message) {
+            const contentBody = document.getElementById('contentBody');
+            contentBody.innerHTML = `
+                <div class="error-message">
+                    <strong>Error:</strong> ${escapeHtml(message)}
+                </div>
+            `;
+        }
+
+        function formatTimestamp(timestamp) {
+            try {
+                // Handle various timestamp formats
+                const cleanTimestamp = timestamp.replace('T', ' ').replace('Z', '');
+                return cleanTimestamp;
+            } catch {
+                return timestamp;
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
