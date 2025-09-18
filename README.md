@@ -145,6 +145,36 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **95% success rate** in automated failure recovery
 - **60-second** test data generation replacing weeks of manual work
 - **Enterprise deployment** serving Fortune 500 testing requirements
+## ⚠️ Important Setup Notes
+
+### 🔗 **External Service Dependencies**
+
+**This platform requires several external service endpoints to function fully. Before running the application, ensure you have:**
+
+1. **Azure OpenAI Service Setup:**
+   - Create an Azure OpenAI resource in Azure Portal
+   - Deploy a GPT model (GPT-4 recommended)
+   - Obtain your API key, endpoint URL, and deployment name
+   - Update `.env` file with these credentials
+
+2. **Required Service Endpoints:**
+
+3. **Service Integration Guide:**
+- **TDM Service**: Configure your Test Data Management endpoints
+- **Data Reconciliation**: Set up your data processing service URLs
+- **Oracle Integration**: Ensure Oracle Cloud AI, Fusion, and EBS connections are established
+
+### 📚 **Additional Resources:**
+
+- **Azure OpenAI Setup Guide**: [Azure OpenAI Documentation](https://learn.microsoft.com/en-us/azure/ai-services/openai/)
+- **FastAPI Documentation**: [FastAPI Official Docs](https://fastapi.tiangolo.com)
+- **LangChain Integration**: [LangChain Documentation](https://python.langchain.com)
+
+### 🔧 **Service URL Configuration:**
+
+Update your `.env` file with actual service endpoints based on your infrastructure:
+
+
 
 ## ⭐ Show Your Support
 
